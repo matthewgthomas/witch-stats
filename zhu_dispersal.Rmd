@@ -1,0 +1,59 @@
+---
+title: "Zhu dispersal"
+output:
+  word_document: default
+---
+
+```{r load_data, warning=FALSE, message=FALSE, echo=FALSE}
+source("init.r")
+
+library(pander)
+library(data.table)
+library(dplyr)
+
+# create dummy for whether/not each person still lives in their natal household (adults only)
+mosuo.adults$HasDispersed = ifelse(mosuo.adults$HHID2012 == mosuo.adults$NatalHousehold, 0, 1)
+
+mosuo.adults$DispersalStatus = case_when(
+  mosuo.adults$HHID2012 == mosuo.adults$NatalHousehold ~ "Never dispersed",
+  mosuo.adults$NatalHousehold %in% c("9", "", "N") ~ "Dispersed from outside Lugu Lake",
+  substring( as.character(mosuo.adults$HHID2012), 1, 1) == substring( as.character(mosuo.adults$NatalHousehold),1,1) ~ "Dispersed within village",
+  TRUE ~ "Dispersed between villages"
+)
+
+mosuo.adults = subset(mosuo.adults, EthnicGroup=="Mosuo")
+```
+
+```{r, echo=FALSE, message=FALSE}
+# code modified from: http://stackoverflow.com/a/34587522
+res = mosuo.adults %>%
+  group_by(zhubo1, DispersalStatus) %>%
+  dplyr::summarise(n = n()) %>%
+  dplyr::mutate(freq = n / sum(n))
+
+#make an 'export' variable
+res$export = with(res, sprintf("%i (%.1f%%)", n, freq*100))
+
+# sort out factors
+res$zhubo1 = as.factor(res$zhubo1)
+levels(res$zhubo1) = c("Not zhu", "Zhu")
+
+res$DispersalStatus = factor(res$DispersalStatus, levels=c("Never dispersed", "Dispersed from outside Lugu Lake", "Dispersed between villages", "Dispersed within village"))
+
+#reshape again
+output = dcast(DispersalStatus~zhubo1, value.var="export", data=res, fill="missing") #use drop=F to prevent silent missings
+```
+
+```{r, results='asis', echo=FALSE}
+knitr::kable(output)
+```
+
+```{r, echo=FALSE, results='hide'}
+zd.table = table(mosuo.adults$DispersalStatus, mosuo.adults$zhubo1)
+( zhubo.dispersal = chisq.test( zd.table ) )
+
+df = zhubo.dispersal$parameter
+chi = zhubo.dispersal$statistic
+```
+
+Being labelled  *zhu* had no effect on dispersal ($\chi^2_{`r df`}$ = `r round(chi, 3)`; *P* = `r round(zhubo.dispersal$p.value, 3)`).
