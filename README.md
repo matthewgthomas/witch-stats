@@ -1,4 +1,4 @@
-# Code to reproduce analyses in 'Population structured by witchcraft beliefs' by Mace et al.
+# Code to reproduce analyses in 'Population structured by witchcraft beliefs' by [Mace et al. (2018)](https://www.nature.com/articles/s41562-017-0271-6)
 
 [![DOI](https://zenodo.org/badge/107792387.svg)](https://zenodo.org/badge/latestdoi/107792387)
 
